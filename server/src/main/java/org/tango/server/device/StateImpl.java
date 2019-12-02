@@ -98,9 +98,7 @@ public final class StateImpl {
                         state = (DevState) getState;
                     }
                 }
-            } catch (final IllegalArgumentException e) {
-                throw DevFailedUtils.newDevFailed(e);
-            } catch (final IllegalAccessException e) {
+            } catch (final IllegalArgumentException | IllegalAccessException e) {
                 throw DevFailedUtils.newDevFailed(e);
             } catch (final InvocationTargetException e) {
                 if (e.getCause() instanceof DevFailed) {
@@ -143,9 +141,7 @@ public final class StateImpl {
                     } else {
                         setStateMethod.invoke(businessObject, this.state);
                     }
-                } catch (final IllegalArgumentException e) {
-                    throw DevFailedUtils.newDevFailed(e);
-                } catch (final IllegalAccessException e) {
+                } catch (final IllegalArgumentException | IllegalAccessException e) {
                     throw DevFailedUtils.newDevFailed(e);
                 } catch (final InvocationTargetException e) {
                     if (e.getCause() instanceof DevFailed) {

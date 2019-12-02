@@ -82,9 +82,7 @@ public final class StatusImpl {
         if (getStatusMethod != null) {
             try {
                 status = (String) getStatusMethod.invoke(businessObject);
-            } catch (final IllegalArgumentException e) {
-                throw DevFailedUtils.newDevFailed(e);
-            } catch (final IllegalAccessException e) {
+            } catch (final IllegalArgumentException | IllegalAccessException e) {
                 throw DevFailedUtils.newDevFailed(e);
             } catch (final InvocationTargetException e) {
                 if (e.getCause() instanceof DevFailed) {
@@ -120,9 +118,7 @@ public final class StatusImpl {
             if (setStatusMethod != null) {
                 try {
                     setStatusMethod.invoke(businessObject, status);
-                } catch (final IllegalArgumentException e) {
-                    throw DevFailedUtils.newDevFailed(e);
-                } catch (final IllegalAccessException e) {
+                } catch (final IllegalArgumentException | IllegalAccessException e) {
                     throw DevFailedUtils.newDevFailed(e);
                 } catch (final InvocationTargetException e) {
                     if (e.getCause() instanceof DevFailed) {

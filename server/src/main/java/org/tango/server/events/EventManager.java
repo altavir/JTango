@@ -231,13 +231,9 @@ public final class EventManager {
 
 
         for (String ipAddress : ipAddresses) {
-            final StringBuilder endpoint = new StringBuilder("tcp://").append(ipAddress).append(":*");
-
-
-            int port = socket.bindToRandomPort(endpoint.toString());
-
-            //replace * with actual port
-            endpoint.deleteCharAt(endpoint.length() - 1).append(port);
+            String address = "tcp://"+ipAddress;
+            int port = socket.bindToRandomPort(address);
+            String endpoint = address + ":" + port;
             endpoints.put(endpoint.toString(), socket);
             logger.debug("bind ZMQ socket {} for {}", endpoint.toString(), socketType);
         }

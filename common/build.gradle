@@ -8,7 +8,7 @@ dependencies {
     api 'org.slf4j:slf4j-ext:1.7.28'
     api 'com.google.guava:guava:28.1-jre'
     api 'org.apache.commons:commons-lang3:3.9'
-    api group: 'org.jboss.spec.javax.rmi', name: 'jboss-rmi-api_1.0_spec', version: '1.0.6.Final'
+    api 'org.jboss.spec.javax.rmi:jboss-rmi-api_1.0_spec:1.0.6.Final'
 }
 
 description = 'Java common'
