@@ -62,17 +62,17 @@ public class Attr implements TangoConst {
     String assoc_name;
     DispLevel disp_level = DispLevel.OPERATOR;
     Vector class_properties = new Vector();
-    Vector user_default_properties = new Vector();
+    Vector<AttrProperty> user_default_properties = new Vector<>();
 
     /**
      * Constructs a newly allocated Attr object.
      * The attribute display type is set to OPERATOR_ATTR.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
-     * @param    w_type    The attribute type (read, write, read with write ...)
-     * @param    assoc    Name of the associated writable attribute. This is used
-     * only the read with write attribute
+     * @param name      The attribute name
+     * @param data_type The attribute data type
+     * @param w_type    The attribute type (read, write, read with write ...)
+     * @param assoc     Name of the associated writable attribute. This is used
+     *                  only the read with write attribute
      */
     public Attr(String name, int data_type, AttrWriteType w_type, String assoc) throws DevFailed {
         this.name = name;
@@ -99,12 +99,8 @@ public class Attr implements TangoConst {
                 assoc_name.equals(Tango_AssocWritNotSpec)) {
             Util.out3.println("Attr.Attr throwing exception");
 
-            StringBuffer o = new StringBuffer("Attribute : ");
-            o.append(name);
-            o.append(": ");
-            o.append(" Associated attribute not defined");
-            Except.throw_exception("API_AttrWrongDefined",
-                    o.toString(), "Attr.Attr");
+            String o = "Attribute : " + name + ": " + " Associated attribute not defined";
+            Except.throw_exception("API_AttrWrongDefined", o, "Attr.Attr");
         }
 
         if (writable.value() == AttrWriteType._READ_WRITE)
@@ -118,8 +114,8 @@ public class Attr implements TangoConst {
      * <p>
      * The type of this attribute is set to READ.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
+     * @param name      The attribute name
+     * @param data_type The attribute data type
      */
 
     public Attr(String name, int data_type) throws DevFailed {
@@ -136,9 +132,9 @@ public class Attr implements TangoConst {
      * Constructs a newly allocated Attr object.
      * The attribute display type is set to OPERATOR_ATTR.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
-     * @param    w_type    The attribute type (read, write, ...)
+     * @param name      The attribute name
+     * @param data_type The attribute data type
+     * @param w_type    The attribute type (read, write, ...)
      */
 
     public Attr(String name, int data_type, AttrWriteType w_type) throws DevFailed {
@@ -168,12 +164,12 @@ public class Attr implements TangoConst {
     /**
      * Constructs a newly allocated Attr object.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
-     * @param    w_type    The attribute type (read, write, read with write ...)
-     * @param    assoc    Name of the associated writable attribute. This is used
-     * only the read with write attribute
-     * @param    level    The attribute display type
+     * @param name      The attribute name
+     * @param data_type The attribute data type
+     * @param w_type    The attribute type (read, write, read with write ...)
+     * @param assoc     Name of the associated writable attribute. This is used
+     *                  only the read with write attribute
+     * @param level     The attribute display type
      */
     public Attr(String name, int data_type, AttrWriteType w_type,
                 String assoc, DispLevel level) throws DevFailed {
@@ -220,9 +216,9 @@ public class Attr implements TangoConst {
      * <p>
      * The type of this attribute is set to READ.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
-     * @param    level    The attribute display type
+     * @param name      The attribute name
+     * @param data_type The attribute data type
+     * @param level     The attribute display type
      */
 
     public Attr(String name, int data_type, DispLevel level) throws DevFailed {
@@ -239,10 +235,10 @@ public class Attr implements TangoConst {
     /**
      * Constructs a newly allocated Attr object.
      *
-     * @param name The attribute name
-     * @param    data_type    The attribute data type
-     * @param    w_type    The attribute type (read, write, ...)
-     * @param    level    The attribute display type
+     * @param name      The attribute name
+     * @param data_type The attribute data type
+     * @param w_type    The attribute type (read, write, ...)
+     * @param level     The attribute display type
      */
 
     public Attr(String name, int data_type, AttrWriteType w_type,

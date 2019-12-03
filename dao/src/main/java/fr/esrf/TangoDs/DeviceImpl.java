@@ -266,9 +266,7 @@ public abstract class DeviceImpl extends Device_2POA implements TangoConst {
 
         dev_attr = new MultiAttribute(device_name, device_class);
 
-        final StringBuffer tmp_adm_name = new StringBuffer("dserver/");
-        tmp_adm_name.append(Util.instance().get_ds_name());
-        adm_device_name = tmp_adm_name.toString();
+        adm_device_name = "dserver/" + Util.instance().get_ds_name();
         init_logger();
     }
 
@@ -2340,7 +2338,7 @@ public abstract class DeviceImpl extends Device_2POA implements TangoConst {
             already_there = false;
         }
 
-        if (already_there == true) {
+        if (already_there) {
             return;
         }
 

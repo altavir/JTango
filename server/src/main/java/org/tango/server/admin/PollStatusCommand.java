@@ -24,12 +24,6 @@
  */
 package org.tango.server.admin;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import fr.esrf.Tango.DevFailed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +37,10 @@ import org.tango.utils.DevFailedUtils;
 import org.tango.utils.TangoUtil;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
@@ -76,50 +71,31 @@ public class PollStatusCommand implements Callable<String[]> {
     }
 
     private void addPolledStatus(List<String> pollStatus, final DeviceImpl device, List<? extends IPollable> pollableList) {
-        Collection<? extends IPollable> polledCommands = Collections2.filter(pollableList, new Predicate<IPollable>() {
-            @Override
-            public boolean apply(IPollable pollable) {
-                return pollable.isPolled();
-            }
-        });
-        pollStatus.addAll(
-                Collections2.transform(polledCommands, new Function<IPollable, String>() {
-                    @Override
-                    public String apply(IPollable pollable) {
-                        return buildPollingStatus(device, pollable).toString();
-                    }
-                }));
+        List<String> polledCommands = pollableList.stream().filter(IPollable::isPolled)
+                .map(pollable -> buildPollingStatus(device, pollable).toString()).collect(Collectors.toList());
+        pollStatus.addAll(polledCommands);
     }
 
     private DeviceImpl tryFindDeviceByName(final String deviceName) throws DevFailed {
-        List<DeviceImpl> allDevices = Lists.newLinkedList(Iterables.concat(Iterables.transform(classList, new Function<DeviceClassBuilder, List<DeviceImpl>>() {
-            @Override
-            public List<DeviceImpl> apply(DeviceClassBuilder input) {
-                return input.getDeviceImplList();
-            }
-        })));
+        List<DeviceImpl> allDevices = classList.stream()
+                .flatMap((DeviceClassBuilder deviceClassBuilder) -> deviceClassBuilder.getDeviceImplList().stream())
+                .collect(Collectors.toList());
 
-        Optional<DeviceImpl> device = Iterables.tryFind(allDevices, new Predicate<DeviceImpl>() {
-            @Override
-            public boolean apply(DeviceImpl input) {
-                return deviceName.equalsIgnoreCase(input.getName());
-            }
-        });
+        Optional<DeviceImpl> device = allDevices.stream().filter(input -> deviceName.equalsIgnoreCase(input.getName())).findFirst();
+        //Iterables.tryFind(allDevices, input -> deviceName.equalsIgnoreCase(input.getName()));
+
         if (!device.isPresent()) {
             //try to find device by alias
-            device = Iterables.tryFind(allDevices, new Predicate<DeviceImpl>() {
-                @Override
-                public boolean apply(DeviceImpl input) {
-                    try {
-                        //returns alias or deviceName
-                        return TangoUtil.getfullNameForDevice(deviceName).equalsIgnoreCase(input.getName());
-                    } catch (DevFailed devFailed) {
-                        logger.warn("Failed to get full name for device {}", deviceName);
-                        DevFailedUtils.logDevFailed(devFailed, logger);
-                        return false;
-                    }
+            device = allDevices.stream().filter(input -> {
+                try {
+                    //returns alias or deviceName
+                    return TangoUtil.getfullNameForDevice(deviceName).equalsIgnoreCase(input.getName());
+                } catch (DevFailed devFailed) {
+                    logger.warn("Failed to get full name for device {}", deviceName);
+                    DevFailedUtils.logDevFailed(devFailed, logger);
+                    return false;
                 }
-            });
+            }).findFirst();
         }
         if (!device.isPresent()) {
             throw DevFailedUtils.newDevFailed(ExceptionMessages.DEVICE_NOT_FOUND, deviceName + AdminDevice.DOES_NOT_EXIST);

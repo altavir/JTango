@@ -76,7 +76,7 @@ public final class AttributePropertiesManager {
      */
     private Map<String, String> getAttributePropertiesFromDBSingle(final String attributeName) throws DevFailed {
         xlogger.entry(attributeName);
-        final Map<String, String> result = new CaseInsensitiveMap<String>();
+        final Map<String, String> result = new CaseInsensitiveMap<>();
         final Map<String, String[]> prop = DatabaseFactory.getDatabase().getAttributeProperties(deviceName,
                 attributeName);
         for (final Entry<String, String[]> entry : prop.entrySet()) {

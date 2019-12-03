@@ -24,11 +24,9 @@
  */
 package org.tango.server.events;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import fr.esrf.Tango.*;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.ext.XLogger;
@@ -54,6 +52,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.tango.orb.ORBManager.OAI_ADDR;
 
@@ -91,7 +93,6 @@ public final class EventManager {
     private EventManager() {
         logger.debug("client IP address is {}", ServerRequestInterceptor.getInstance().getClientIPAddress());
         logger.info("ZMQ ({}) SERVER event system started", ZMQ.getVersionString());
-        isInitialized = false;
     }
 
     private int initializeServerHwm() {
@@ -150,12 +151,7 @@ public final class EventManager {
     private void initialize() throws DevFailed {
         xlogger.entry();
         Iterable<String> ipAddress = getIpAddresses();
-        Iterable<String> ip4Address = Iterables.filter(ipAddress, new Predicate<String>() {
-            @Override
-            public boolean apply(String s) {
-                return s.split("\\.").length == 4;
-            }
-        });
+        Iterable<String> ip4Address = StreamSupport.stream(ipAddress.spliterator(), false).filter(s -> s.split("\\.").length == 4).collect(Collectors.toList());
         // Get the free ports and build endpoints
         bindEndpoints(createSocket(), ip4Address, heartbeatEndpoints, SocketType.HEARTBEAT);
         bindEndpoints(createEventSocket(), ip4Address, eventEndpoints, SocketType.EVENTS);
@@ -181,35 +177,26 @@ public final class EventManager {
             result.add(OAI_ADDR);
         } else {
             try {
-                Iterable<NetworkInterface> networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+                List<NetworkInterface> networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
 
                 result = new ArrayList<>();
 
-                Predicate<NetworkInterface> isLoopback = new Predicate<NetworkInterface>() {
-                    @Override
-                    public boolean apply(NetworkInterface networkInterface) {
-                        try {
-                            return !networkInterface.isLoopback();
-                        } catch (SocketException e) {
-                            logger.warn("Ignoring NetworkInterface({}) due to an exception: {}", networkInterface.getName(), e);
-                            return false;
-                        }
+                Predicate<NetworkInterface> isLoopback = networkInterface -> {
+                    try {
+                        return !networkInterface.isLoopback();
+                    } catch (SocketException e) {
+                        logger.warn("Ignoring NetworkInterface({}) due to an exception: {}", networkInterface.getName(), e);
+                        return false;
                     }
                 };
 
-                Function<InterfaceAddress, String> interfaceAddressToString = new Function<InterfaceAddress, String>() {
-                    @Override
-                    public String apply(InterfaceAddress interfaceAddress) {
-                        return interfaceAddress.getAddress().getHostAddress();
-                    }
-                };
+                Function<InterfaceAddress, @Nullable String> interfaceAddressToString = interfaceAddress -> interfaceAddress.getAddress().getHostAddress();
 
-                Iterable<NetworkInterface> filteredNICs = Iterables.filter(networkInterfaces, isLoopback);
-                for (NetworkInterface nic : filteredNICs) {
-                    result.addAll(
-                            Lists.transform(nic.getInterfaceAddresses(), interfaceAddressToString)
-                    );
-                }
+                networkInterfaces.stream().filter(isLoopback).forEach(nic ->
+                        result.addAll(
+                                nic.getInterfaceAddresses().stream().map(interfaceAddressToString).collect(Collectors.toList())
+                        )
+                );
             } catch (SocketException e) {
                 throw DevFailedUtils.newDevFailed(e);
             }
@@ -223,7 +210,6 @@ public final class EventManager {
      *
      * @param socket
      * @param ipAddresses
-     * @param endpoints
      * @param socketType
      */
     private void bindEndpoints(ZMQ.Socket socket, Iterable<String> ipAddresses, Map<String, ZMQ.Socket> endpoints, SocketType socketType) {
@@ -231,13 +217,12 @@ public final class EventManager {
 
 
         for (String ipAddress : ipAddresses) {
-            String address = "tcp://"+ipAddress;
+            String address = "tcp://" + ipAddress;
             int port = socket.bindToRandomPort(address);
             String endpoint = address + ":" + port;
             endpoints.put(endpoint.toString(), socket);
             logger.debug("bind ZMQ socket {} for {}", endpoint.toString(), socketType);
         }
-
         xlogger.exit();
     }
 
@@ -468,7 +453,7 @@ public final class EventManager {
      *
      * @param attributeName specified event attribute
      * @param devFailed     the attribute failed error to be sent as event
-     * @throws fr.esrf.Tango.DevFailed
+     * @throws DevFailed
      * @throws DevFailed
      */
     public void pushAttributeErrorEvent(final String deviceName, final String attributeName, final DevFailed devFailed)
